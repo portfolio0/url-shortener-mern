@@ -1,6 +1,6 @@
-import shorturl from "../models/shorturl.model.js";
 import urlschema from "../models/shorturl.model.js";
 import { conflictError } from "../utils/errorhandler.js";
+
 export const saveshorturl = async (shorturl, fullurl, userid) => {
   try {
     const newurl = new urlschema({
@@ -8,12 +8,11 @@ export const saveshorturl = async (shorturl, fullurl, userid) => {
       short_url: shorturl,
     });
     if (userid) {
-      newurl.userid = userid;
+      newurl.user = userid;
     }
     await newurl.save();
     return newurl;
   } catch (err) {
-    // console.log(err);
     if (err.code == 11000) {
       throw new conflictError(err);
     }
@@ -24,6 +23,15 @@ export const saveshorturl = async (shorturl, fullurl, userid) => {
 export const getshorturl = async (shorturl) => {
   return await urlschema.findOneAndUpdate(
     { short_url: shorturl },
-    { $inc: { clicks: 1 } }
+    { $inc: { clicks: 1 } },
   );
+};
+
+export const checkaliasexists = async (alias) => {
+  const found = await urlschema.findOne({ short_url: alias });
+  return !!found;
+};
+
+export const getuserurls = async (userid) => {
+  return await urlschema.find({ user: userid }).sort({ _id: -1 });
 };

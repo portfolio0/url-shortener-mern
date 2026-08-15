@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import axios from "axios";
 
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -7,14 +6,21 @@ import "react-toastify/dist/ReactToastify.css";
 import { createshorturl } from "../../api/shorturl.api";
 const Url_form = () => {
   const [url, seturl] = useState("");
+  const [customalias, setcustomalias] = useState("");
 
   const [shorturl, setshorturl] = useState("");
+  const [error, seterror] = useState("");
 
   const handlesubmit = async () => {
-    const createdshorturl = await createshorturl(url);
-    // console.log(url);
-    // // console.log("hello");
-    setshorturl(createdshorturl);
+    try {
+      seterror("");
+      const data = await createshorturl(url, customalias || undefined);
+      // console.log(url);
+      // // console.log("hello");
+      setshorturl(data.shorturl);
+    } catch (err) {
+      seterror(err.response?.data?.message || "something went wrong");
+    }
   };
 
   const notify = () => toast("URL Copied To Clipboard");
@@ -22,6 +28,7 @@ const Url_form = () => {
     <>
       <div className="space-y-4">
         <ToastContainer />
+        {error && <p className="text-red-500 text-sm">{error}</p>}
         <div>
           <label
             htmlFor="url"
@@ -36,6 +43,22 @@ const Url_form = () => {
             required
             value={url}
             onChange={(e) => seturl(e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-md"
+          />
+        </div>
+        <div>
+          <label
+            htmlFor="customalias"
+            className="block text-sm font-medium text-gray-50"
+          >
+            Custom Alias (optional)
+          </label>
+          <input
+            type="text"
+            id="customalias"
+            placeholder="my-custom-link"
+            value={customalias}
+            onChange={(e) => setcustomalias(e.target.value)}
             className="w-full px-4 py-2 border border-gray-300 rounded-md"
           />
         </div>

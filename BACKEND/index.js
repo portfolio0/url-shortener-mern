@@ -1,32 +1,36 @@
 import express from "express";
 import dotenv from "dotenv";
-import { nanoid } from "nanoid";
+import cors from "cors";
+import cookieparser from "cookie-parser";
 import connectdb from "./src/config/mongo.config.js";
-import urlschema from "./src/models/shorturl.model.js";
-import shorturl from "./src/routes/shorturl.route.js";
+import shorturlroute from "./src/routes/shorturl.route.js";
+import authroute from "./src/routes/auth.route.js";
 import { redirectfromshorturl } from "./src/controller/shorturl.controller.js";
 import { errorhandler } from "./src/utils/errorhandler.js";
-import cors from "cors";
+
+dotenv.config();
+
 const app = express();
-app.use(cors());
+
+app.use(
+  cors({
+    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    credentials: true,
+  })
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-dotenv.config();
+app.use(cookieparser());
+
 const PORT = process.env.PORT || 3000;
 
-app.use("/api/create", shorturl);
-app.use(errorhandler);
+app.use("/api/create", shorturlroute);
+app.use("/api/auth", authroute);
 
 app.get("/:id", redirectfromshorturl);
-//    async (req, res) => {
-//   const { id } = req.params;
-//   const url = await urlschema.findOne({ short_url: id });
-//   if (url) {
-//     res.redirect(url.full_url);
-//   } else {
-//     res.status(404).send("Not Found");
-//   }
-// });
+
+// error handler must stay last
+app.use(errorhandler);
 
 app.listen(PORT, () => {
   connectdb();

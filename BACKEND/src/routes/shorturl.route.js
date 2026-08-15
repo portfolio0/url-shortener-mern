@@ -1,18 +1,13 @@
-import express, { Router } from "express";
-import { nanoid } from "nanoid";
-import { createshorturl } from "../controller/shorturl.controller.js";
+import express from "express";
+import {
+  createshorturl,
+  getmyurls,
+} from "../controller/shorturl.controller.js";
+import { optionalauth, requireauth } from "../middleware/auth.middleware.js";
+
 const router = express.Router();
 
-router.post("/", createshorturl);
+router.post("/", optionalauth, createshorturl);
+router.get("/myurls", requireauth, getmyurls);
 
 export default router;
-
-/*
- (req, res) => {
-  const { url } = req.body;
-  const shorturl = nanoid(7);
-  const newurl = new urlschema({
-    full_url: url,
-    short_url: shorturl,
-  });
-*/
