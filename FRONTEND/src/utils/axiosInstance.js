@@ -8,8 +8,12 @@ export const setaccesstoken = (token) => {
 
 export const getaccesstoken = () => accesstoken;
 
+const API_BASE_URL = (
+  import.meta.env.VITE_API_URL || "http://localhost:3000"
+).replace(/\/$/, "");
+
 const axiosinstance = axios.create({
-  baseURL: "http://localhost:3000",
+  baseURL: API_BASE_URL,
   withCredentials: true,
 });
 
@@ -51,7 +55,7 @@ axiosinstance.interceptors.response.use(
 
       try {
         const { data } = await axios.post(
-          "http://localhost:3000/api/auth/refresh",
+          `${API_BASE_URL}/api/auth/refresh`,
           {},
           { withCredentials: true },
         );

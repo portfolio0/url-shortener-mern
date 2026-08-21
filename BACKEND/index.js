@@ -2,6 +2,7 @@ import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import cookieparser from "cookie-parser";
+
 import connectdb from "./src/config/mongo.config.js";
 import shorturlroute from "./src/routes/shorturl.route.js";
 import authroute from "./src/routes/auth.route.js";
@@ -12,12 +13,32 @@ dotenv.config();
 
 const app = express();
 
+app.set("trust proxy", 1);
+
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    origin: (origin, callback) => {
+      // allow requests with no origin (e.g. mobile apps, postman, curl)
+      if (!origin) return callback(null, true);
+      
+      const clientUrl = process.env.CLIENT_URL ? process.env.CLIENT_URL.replace(/\/$/, "") : null;
+      const cleanOrigin = origin.replace(/\/$/, "");
+      
+      if (
+        !clientUrl ||
+        cleanOrigin === clientUrl ||
+        cleanOrigin === "http://localhost:5173" ||
+        cleanOrigin === "http://localhost:3000" ||
+        process.env.NODE_ENV !== "production"
+      ) {
+        return callback(null, true);
+      }
+      return callback(null, true);
+    },
     credentials: true,
-  })
+  }),
 );
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieparser());
@@ -27,14 +48,34 @@ const PORT = process.env.PORT || 3000;
 app.use("/api/create", shorturlroute);
 app.use("/api/auth", authroute);
 
-app.get("/:id", redirectfromshorturl);
-
-// error handler must stay last
-app.use(errorhandler);
-
-app.listen(PORT, () => {
-  connectdb();
-  console.log(`server listen on ${process.env.PORT}...`);
+app.get("/health", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "URL Shortener API is running",
+  });
 });
 
-console.log("running!!");
+// Example:
+// https://your-backend.onrender.com/abc123
+
+app.get("/:id", redirectfromshorturl);
+
+// Must remain after all routes
+app.use(errorhandler);
+
+const startServer = async () => {
+  try {
+    await connectdb();
+
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log(`Server running on port ${PORT}`);
+      console.log(`Environment: ${process.env.NODE_ENV || "development"}`);
+    });
+  } catch (error) {
+    console.error("Failed to start server:", error);
+
+    process.exit(1);
+  }
+};
+
+startServer();

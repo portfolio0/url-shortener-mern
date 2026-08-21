@@ -8,10 +8,12 @@ import {
 import { finduserbyid } from "../dao/user.dao.js";
 import { wrapasync } from "../utils/trycatchwrapper.js";
 
+const isProduction = process.env.NODE_ENV === "production";
+
 const refreshcookieoptions = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
-  sameSite: "strict",
+  secure: isProduction,
+  sameSite: isProduction ? "none" : "lax",
   maxAge: 7 * 24 * 60 * 60 * 1000,
 };
 
